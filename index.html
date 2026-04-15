@@ -11,14 +11,64 @@
       height: 100%;
       overflow: hidden;
       background: #000;
+      font-family: Arial, sans-serif;
     }
 
+    #startScreen,
     #tourContainer {
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
     }
 
-    #tourContainer iframe {
+    #startScreen {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      color: white;
+      background: black;
+      padding: 40px;
+      box-sizing: border-box;
+      z-index: 20;
+    }
+
+    #startScreen h1 {
+      font-size: 2.2rem;
+      margin-bottom: 16px;
+    }
+
+    #startScreen p {
+      max-width: 700px;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      margin: 8px 0;
+    }
+
+    #startButton {
+      margin-top: 28px;
+      padding: 14px 28px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      background: white;
+      color: black;
+      font-weight: bold;
+    }
+
+    #startButton:hover {
+      opacity: 0.9;
+    }
+
+    #tourContainer {
+      display: none;
+      z-index: 1;
+    }
+
+    #tourFrame {
       width: 100%;
       height: 100%;
       border: none;
@@ -36,45 +86,85 @@
       font-size: 14px;
       z-index: 10;
       pointer-events: none;
+      display: none;
     }
   </style>
 </head>
-
 <body>
 
-<div id="tourContainer">
-  <iframe 
-    id="tourFrame"
-    src="https://www.thinglink.com/view/scene/1889567083826512358"
-    allowfullscreen
-    scrolling="no">
-  </iframe>
-</div>
+  <div id="startScreen">
+    <h1>Libbie and the Hat Hunt</h1>
+    <p>Explore the space by tapping the hotspots around the image. You can move around by dragging the image.</p>
+    <p>When you are done, simply walk away. The experience will reset automatically for the next visitor.</p>
+    <button id="startButton">Start The Hunt!</button>
+  </div>
 
-<div id="hint">The library resets itself for each explorer…</div>
+  <div id="tourContainer">
+    <iframe
+      id="tourFrame"
+      src=""
+      allowfullscreen
+      scrolling="no">
+    </iframe>
+  </div>
 
-<script async src="https://cdn.thinglink.me/jse/responsive.js"></script>
+  <div id="hint">This experience will reset after inactivity.</div>
 
-<script>
-  const RESET_MS = 90000; // 90 seconds
-  let timer;
+  <script async src="https://cdn.thinglink.me/jse/responsive.js"></script>
 
-  function restartTour() {
-    const frame = document.getElementById("tourFrame");
-    frame.src = frame.src; // reload iframe
-  }
+  <script>
+    const THINGLINK_URL = "https://www.thinglink.com/view/scene/1889567083826512358";
+    const RESET_MS = 5000; // 90 seconds; 5 seconds for testing
 
-  function resetTimer() {
-    clearTimeout(timer);
-    timer = setTimeout(restartTour, RESET_MS);
-  }
+    const startScreen = document.getElementById("startScreen");
+    const tourContainer = document.getElementById("tourContainer");
+    const tourFrame = document.getElementById("tourFrame");
+    const startButton = document.getElementById("startButton");
+    const hint = document.getElementById("hint");
 
-  ["click", "touchstart", "touchmove", "mousemove", "keydown"].forEach(evt => {
-    document.addEventListener(evt, resetTimer, { passive: true });
-  });
+    let timer = null;
+    let experienceStarted = false;
 
-  resetTimer();
-</script>
+    function showStartScreen() {
+      experienceStarted = false;
+      clearTimeout(timer);
+
+      tourFrame.src = "";
+      tourContainer.style.display = "none";
+      hint.style.display = "none";
+      startScreen.style.display = "flex";
+    }
+
+    function startExperience() {
+      experienceStarted = true;
+
+      startScreen.style.display = "none";
+      tourContainer.style.display = "block";
+      hint.style.display = "block";
+
+      tourFrame.src = THINGLINK_URL;
+      resetTimer();
+    }
+
+    function resetToStartScreen() {
+      showStartScreen();
+    }
+
+    function resetTimer() {
+      if (!experienceStarted) return;
+      clearTimeout(timer);
+      timer = setTimeout(resetToStartScreen, RESET_MS);
+    }
+
+    startButton.addEventListener("click", startExperience);
+    startButton.addEventListener("touchstart", startExperience);
+
+    ["click", "touchstart", "touchmove", "mousemove", "keydown"].forEach(evt => {
+      document.addEventListener(evt, resetTimer, { passive: true });
+    });
+
+    showStartScreen();
+  </script>
 
 </body>
 </html>
